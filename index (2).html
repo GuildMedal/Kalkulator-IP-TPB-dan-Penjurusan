@@ -1,0 +1,331 @@
+<title>Kalkulator IP TPB</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap">
+<style>
+/* Layout: satu kolom sempit, tiga panel berurutan (fakultas, pilihan, indeks) dengan hasil IP di bawah daftar mata kuliah */
+:root{
+  --bg:#0b1220; --panel:#121d30; --panel2:#0d1728; --line:#2a3a52;
+  --text:#edf3fb; --muted:#a5b4c9; --accent:#8ab4ff; --onaccent:#102039;
+  --good:#7ee0b0; --goodbg:#143b31; --bad:#ff8585; --badbg:#451f2a;
+  --metric:#142239; --bgfrom:#0b1220; --bgto:#111b2d; --warn:#ffd38a; --warnbg:#4a3a12;
+  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-head:"Space Grotesk","Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f3f6fb; --panel:#ffffff; --panel2:#f0f4fa; --line:#d3dbe8;
+    --text:#0f1a2b; --muted:#55657d; --accent:#2f5fd0; --onaccent:#ffffff;
+    --good:#12805a; --goodbg:#dcf5ea; --bad:#b83232; --badbg:#fbe3e3;
+    --metric:#eaf0f9; --bgfrom:#f3f6fb; --bgto:#e8eef8; --warn:#7a5200; --warnbg:#fdf0cf; color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f3f6fb; --panel:#ffffff; --panel2:#f0f4fa; --line:#d3dbe8;
+  --text:#0f1a2b; --muted:#55657d; --accent:#2f5fd0; --onaccent:#ffffff;
+  --good:#12805a; --goodbg:#dcf5ea; --bad:#b83232; --badbg:#fbe3e3;
+  --metric:#eaf0f9; --bgfrom:#f3f6fb; --bgto:#e8eef8; --warn:#7a5200; --warnbg:#fdf0cf; color-scheme:light;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); background-image:linear-gradient(160deg,var(--bgfrom),var(--bgto));
+  background-attachment:fixed; color:var(--text); font-family:var(--font-body); font-size:16px; line-height:1.5;
+  min-height:100%; padding-block:24px;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+main{max-width:760px;margin:auto}
+.eyebrow{color:var(--accent);font-size:.8rem;letter-spacing:.13em;text-transform:uppercase;font-weight:700}
+h1{font-family:var(--font-head);font-size:clamp(1.8rem,5vw,2.5rem);line-height:1.15;margin:.35rem 0;text-wrap:balance}
+p{margin:0}
+.muted{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;margin:16px 0}
+.step{font-size:.8rem;color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.step .count{color:var(--muted);letter-spacing:.04em;text-transform:none;font-weight:600}
+.hint{font-size:.85rem;color:var(--muted);margin-top:12px}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.choice{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.choice:hover{border-color:var(--accent)}
+.choice[aria-pressed="true"]{background:var(--accent);color:var(--onaccent);border-color:var(--accent)}
+.fac-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:600px){.fac-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.fac-btn{text-align:left;padding:12px 14px;min-width:0}
+.fac-btn small{display:block;font-weight:500;font-size:.72rem;line-height:1.35;color:var(--muted);margin-top:3px}
+.fac-btn[aria-pressed="true"] small{color:var(--onaccent);opacity:.8}
+.mode-btn{display:block;width:100%;text-align:left;padding:16px}
+.mode-btn strong{display:block;font-family:var(--font-head);font-size:1.1rem}
+.mode-btn small{display:block;font-weight:500;color:var(--muted);margin-top:4px;font-size:.88rem}
+.mode-btn[aria-pressed="true"] small{color:var(--onaccent);opacity:.85}
+.course-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:10px}
+.course{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.course-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.course-name{font-weight:600;font-size:.94rem;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.sks{flex:none;border:1px solid var(--line);border-radius:99px;padding:2px 9px;color:var(--muted);font-size:.76rem;font-weight:600;white-space:nowrap}
+.grade-row{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.grade{min-height:44px;padding:0;font-size:.92rem;background:var(--bg)}
+.result{padding:18px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);margin-top:16px}
+.result h2{margin:0 0 4px;font-family:var(--font-head);font-size:1.1rem}
+.big{font-family:var(--font-head);font-size:2.6rem;font-weight:700;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.status{display:inline-block;font-weight:700;font-size:.82rem;padding:5px 10px;border-radius:8px;margin-top:8px}
+.status.done{background:var(--goodbg);color:var(--good)}
+.status.partial{background:var(--metric);color:var(--accent)}
+.summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.metric{background:var(--metric);border-radius:12px;padding:13px}
+.metric span{display:block;color:var(--muted);font-size:.8rem}
+.metric strong{font-size:1.2rem;font-variant-numeric:tabular-nums}
+.actions{display:flex;justify-content:flex-end;margin-top:14px}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:600;color:var(--muted)}
+.ghost:hover{border-color:var(--bad);color:var(--bad)}
+h1.brand{display:flex;align-items:center;gap:12px}
+.brand-img{height:40px;width:auto;border-radius:8px}
+.sub{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.sub h3{margin:0 0 6px;font-family:var(--font-head);font-size:1rem}
+.mid{font-family:var(--font-head);font-size:1.7rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow-x:auto;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{text-align:left;color:var(--muted);font-size:.75rem;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700;border-bottom:0}
+.formula{margin-top:12px;font-size:.95rem}
+.verdict{border-radius:12px;padding:14px;margin-top:10px}
+.verdict.aman{background:var(--goodbg);color:var(--good)}
+.verdict.siaga1{background:var(--warnbg);color:var(--warn)}
+.verdict.siaga2{background:var(--badbg);color:var(--bad)}
+.verdict-label{font-family:var(--font-head);font-size:1.5rem;font-weight:700;line-height:1.2}
+.verdict img{display:block;max-height:80px;max-width:100%;margin:10px 0;border-radius:8px}
+.verdict p{color:var(--text);font-size:.9rem;margin-top:6px}
+.footer{font-size:.8rem;color:var(--muted);text-align:center;margin:26px 0}
+@media(max-width:480px){.panel{padding:15px}.big{font-size:2.2rem}.fac-btn{padding:11px 12px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main>
+  <div class="eyebrow">ITB · Academic helper</div>
+  <h1 class="brand"><img class="brand-img" src="header.png" alt="Header Icon" onerror="this.style.display='none'">Kalkulator IP TPB</h1>
+  <p class="muted">Pilih fakultasmu, masukkan indeks tiap mata kuliah, lalu lihat IP semester ini.</p>
+
+  <section class="panel" id="panelFac">
+    <div class="step"><span>01 · Pilih fakultas</span></div>
+    <div class="fac-grid" id="facGrid"></div>
+  </section>
+
+  <section class="panel" id="panelMode" hidden>
+    <div class="step"><span>02 · Pilih yang ingin dilakukan</span></div>
+    <div id="modeList"></div>
+  </section>
+
+  <section class="panel" id="panelCalc" hidden>
+    <div class="step"><span id="calcTitle">03 · Masukkan indeks</span><span class="count" id="fillCount"></span></div>
+    <div class="course-grid" id="courseGrid"></div>
+    <p class="hint">Ketuk indeks yang sama sekali lagi untuk mengosongkannya. Daftar mata kuliah dan SKS bisa diubah di bagian konfigurasi pada kode.</p>
+    <div id="result" class="result" aria-live="polite"></div>
+    <div id="jurusanOut" aria-live="polite"></div>
+    <div class="actions"><button type="button" class="ghost" id="resetBtn">Reset indeks</button></div>
+  </section>
+
+  <div class="footer">Perhitungan berjalan di browser kamu. Nilai tidak dikirim ke server.</div>
+</main>
+
+<script>
+/* ===== Konfigurasi (edit di sini) ===== */
+const GRADES = [["A",4],["AB",3.5],["B",3],["BC",2.5],["C",2],["D",1],["E",0]];
+
+const COURSES = {
+  mat:["Matematika",4], fis:["Fisika Dasar",3], kim:["Kimia Dasar",3],
+  pan:["Pancasila / Bahasa Indonesia / Inggris",2], bk:["Berpikir Komputasional",2],
+  ppk:["Pengantar Prinsip Keberlanjutan",2],
+  lfis:["Laboratorium Fisika Dasar",1], lkim:["Laboratorium Kimia Dasar",1],
+  lik:["Laboratorium Interaksi Komputer",1],
+  pith:["Pengenalan Ilmu dan Teknologi Hayati",1],
+  psdme:["Pengantar Sumber Daya Mineral dan Energi",1],
+  ptmmd:["Pengenalan Teknik Mesin, Material, dan Dirgantara",1],
+  lperm:["Laboratorium Permukiman",2],
+  gb:["Gambar Bentuk",3], gk:["Gambar Konstruktif",3],
+  rd2:["Rupa Dasar 2 Dimensi",3], rd3:["Rupa Dasar 3 Dimensi",3],
+  ldsrd:["Laboratorium Dasar Seni Rupa dan Desain",2],
+  mb:["Matematika Bisnis",4], pb:["Pengantar Bisnis",4], st:["Sains Terpadu",2],
+  lbm:["Laboratorium Bisnis dan Manajemen",2]
+};
+
+const BASE = ["mat","fis","kim","pan","bk","ppk","lfis","lkim"];
+const swap = (list, from, to) => list.map(c => c === from ? to : c);
+
+/* jurusan: akan diisi nanti (nama jurusan + IP tahun lalu untuk masuk) */
+const FACULTIES = [
+  {key:"FMIPA", full:"Fakultas Matematika dan Ilmu Pengetahuan Alam", courses:BASE, jurusan:[]},
+  {key:"SITH", full:"Sekolah Ilmu dan Teknologi Hayati", courses:[...BASE,"pith"], jurusan:[]},
+  {key:"SF", full:"Sekolah Farmasi", courses:BASE, jurusan:[]},
+  {key:"FTTM", full:"Fakultas Teknik Pertambangan dan Perminyakan", courses:[...BASE,"psdme"], jurusan:[]},
+  {key:"FITB", full:"Fakultas Ilmu dan Teknologi Kebumian", courses:BASE, jurusan:[]},
+  {key:"FTI", full:"Fakultas Teknologi Industri", courses:BASE, jurusan:[]},
+  {key:"STEI-K", full:"Sekolah Teknik Elektro dan Informatika, Komputasi", courses:swap(BASE,"lkim","lik"), jurusan:[
+    /* poin = bobot tiap mata kuliah untuk IP penjurusan; min:null = kuota tahun lalu tidak terpenuhi (selalu Aman) */
+    {name:"Teknik Informatika", poin:[["mat",5],["fis",3],["kim",1],["bk",5],["lik",4]], min:3.17},
+    {name:"Sistem dan Teknologi Informasi", poin:[["mat",5],["fis",3],["kim",1],["bk",5],["ppk",4]], min:null}
+  ]},
+  {key:"STEI-R", full:"Sekolah Teknik Elektro dan Informatika, Rekayasa", courses:BASE, jurusan:[]},
+  {key:"FTMD", full:"Fakultas Teknik Mesin dan Dirgantara", courses:[...BASE,"ptmmd"], jurusan:[]},
+  {key:"FTSL", full:"Fakultas Teknik Sipil dan Lingkungan", courses:BASE, jurusan:[]},
+  {key:"SAPPK", full:"Sekolah Arsitektur, Perencanaan, dan Pengembangan Kebijakan", courses:[...BASE.filter(c=>c!=="lfis"&&c!=="lkim"),"lperm"], jurusan:[]},
+  {key:"FSRD", full:"Fakultas Seni Rupa dan Desain", courses:["gb","gk","rd2","rd3","bk","pan","ppk","ldsrd"], jurusan:[]},
+  {key:"SBM", full:"Sekolah Bisnis dan Manajemen", courses:["mb","pb","st","pan","bk","ppk","lbm"], jurusan:[]}
+];
+
+const modesFor = f => [
+  {key:"ip", title:"Hitung IP Semester", desc:"Pilih indeks tiap mata kuliah, IP semester ini langsung dihitung."},
+  ...f.jurusan.map((j,i) => ({key:"j"+i, title:"Jurusan " + j.name, desc:"Cek peluang masuk jurusan ini, lengkap dengan IP semester."}))
+];
+
+/* ===== State ===== */
+const STORE_KEY = "kalkulator-ip-tpb:v1";
+let facKey = null, modeKey = null, grades = {};
+try { grades = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { grades = {}; }
+const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(grades)); } catch (e) {} };
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtSks = n => Number(n).toLocaleString("id-ID",{maximumFractionDigits:1});
+const gradePoint = label => (GRADES.find(g => g[0] === label) || [])[1];
+const curFac = () => FACULTIES.find(f => f.key === facKey);
+const gKey = (fac, c) => fac + "|" + c;
+
+/* ===== Render ===== */
+function renderFaculties(){
+  $("facGrid").innerHTML = FACULTIES.map(f =>
+    `<button type="button" class="choice fac-btn" data-fac="${f.key}" aria-pressed="${f.key===facKey}">${f.key}<small>${f.full}</small></button>`
+  ).join("");
+}
+function renderModes(){
+  $("modeList").innerHTML = modesFor(curFac()).map(m =>
+    `<button type="button" class="choice mode-btn" data-mode="${m.key}" aria-pressed="${m.key===modeKey}"><strong>${m.title}</strong><small>${m.desc}</small></button>`
+  ).join("");
+}
+function renderCourses(){
+  const f = curFac();
+  $("calcTitle").textContent = "03 · Masukkan indeks · " + f.key;
+  $("courseGrid").innerHTML = f.courses.map(id => {
+    const [name, sks] = COURSES[id];
+    const cur = grades[gKey(f.key,id)];
+    const btns = GRADES.map(([lab]) =>
+      `<button type="button" class="choice grade" data-course="${id}" data-grade="${lab}" aria-pressed="${cur===lab}" aria-label="${name}: indeks ${lab}">${lab}</button>`
+    ).join("");
+    return `<div class="course"><div class="course-head"><div class="course-name">${name}</div><span class="sks">${sks} SKS</span></div><div class="grade-row" role="group" aria-label="Indeks ${name}">${btns}</div></div>`;
+  }).join("");
+  calculate();
+}
+function calcSemester(){
+  const f = curFac();
+  const total = f.courses.reduce((s,id)=>s+COURSES[id][1],0);
+  let sks = 0, mutu = 0, filled = 0;
+  f.courses.forEach(id => {
+    const g = grades[gKey(f.key,id)];
+    if(!g) return;
+    sks += COURSES[id][1]; mutu += COURSES[id][1]*gradePoint(g); filled++;
+  });
+  $("fillCount").textContent = `${filled} dari ${f.courses.length} terisi`;
+  if(!filled){
+    $("result").innerHTML = `<h2>IP Semester</h2><p class="muted">Pilih indeks minimal satu mata kuliah untuk melihat IP.</p>`;
+    return;
+  }
+  const ip = mutu/sks, done = filled === f.courses.length;
+  $("result").innerHTML = `
+    <h2>${done ? "IP Semester ini" : "IP sementara"}</h2>
+    <div class="big">${fmt(ip)}</div>
+    <span class="status ${done?"done":"partial"}">${done ? `Semua ${f.courses.length} mata kuliah terisi` : `Dihitung dari ${fmtSks(sks)} dari ${fmtSks(total)} SKS`}</span>
+    <div class="summary">
+      <div class="metric"><span>SKS terisi</span><strong>${fmtSks(sks)} / ${fmtSks(total)}</strong></div>
+      <div class="metric"><span>Total mutu (bobot × SKS)</span><strong>${fmt(mutu)}</strong></div>
+    </div>`;
+}
+
+/* ===== Penjurusan (khusus STEI-K) ===== */
+const BAND = 0.1; /* selisih ±0,1 dari IP tahun lalu = Siaga 1 */
+const STATUS = {
+  aman:{label:"Aman", img:"aman.png"},
+  siaga1:{label:"Siaga 1", img:"siaga1.png"},
+  siaga2:{label:"Siaga 2", img:"siaga2.png"}
+};
+const fmtSigned = n => (n > 0 ? "+" : n < 0 ? "−" : "") + fmt(Math.abs(n));
+function statusOf(ip, min){
+  if(min === null) return "aman";
+  const d = Math.round(ip*100) - Math.round(min*100), band = Math.round(BAND*100);
+  if(d > band) return "aman";
+  if(d >= -band) return "siaga1";
+  return "siaga2";
+}
+function renderJurusan(){
+  const out = $("jurusanOut"), f = curFac();
+  const j = modeKey && modeKey.charAt(0) === "j" ? f.jurusan[Number(modeKey.slice(1))] : null;
+  if(!j){ out.innerHTML = ""; return; }
+  const rows = j.poin.map(([id,p]) => {
+    const lab = grades[gKey(f.key,id)], pt = lab ? gradePoint(lab) : null;
+    return {name:COURSES[id][0], lab, pt, p, hasil: pt === null ? null : pt*p};
+  });
+  const totalP = rows.reduce((s,r) => s + r.p, 0);
+  const missing = rows.filter(r => r.pt === null);
+  const done = missing.length === 0;
+  const sum = rows.reduce((s,r) => s + (r.hasil || 0), 0);
+  const ip = done ? sum/totalP : null;
+
+  const body = rows.map(r => `<tr><td>${r.name}</td><td class="num">${r.lab ? r.lab + " (" + fmtSks(r.pt) + ")" : "–"}</td><td class="num">× ${r.p}</td><td class="num">${r.hasil === null ? "–" : fmtSks(r.hasil)}</td></tr>`).join("");
+  const tbl = `<div class="tbl-wrap"><table><thead><tr><th>Mata kuliah</th><th class="num">Indeks (nilai)</th><th class="num">Poin</th><th class="num">Hasil</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td>Total</td><td></td><td class="num">${fmtSks(totalP)}</td><td class="num">${done ? fmtSks(sum) : "–"}</td></tr></tfoot></table></div>`;
+  const formula = done
+    ? `IP penjurusan = ${fmtSks(sum)} ÷ ${fmtSks(totalP)} = <strong>${fmt(ip)}</strong>`
+    : `<span class="muted">Isi indeks ${missing.map(r => r.name).join(", ")} untuk menghitung IP penjurusan.</span>`;
+
+  const last = j.min === null
+    ? `<div class="mid">Tidak mencukupi kuota</div><p class="hint">Pendaftar tahun lalu tidak memenuhi kuota, jadi tidak ada batas minimum.</p>`
+    : `<div class="mid">${fmt(j.min)}</div><p class="hint">IP penjurusan terendah yang diterima tahun lalu.</p>`;
+
+  let verdict = `<p class="hint">Status muncul setelah semua indeks yang dibutuhkan terisi.</p>`;
+  if(done){
+    const key = statusOf(ip, j.min), st = STATUS[key];
+    const note = key === "aman"
+      ? (j.min === null ? "Kuota jurusan ini tidak terpenuhi tahun lalu, jadi semua pendaftar diterima." : "IP penjurusanmu lebih dari 0,1 di atas IP tahun lalu.")
+      : key === "siaga1" ? "IP penjurusanmu berada dalam ±0,1 dari IP tahun lalu. Hasilnya masih bisa ke dua arah."
+      : "IP penjurusanmu lebih dari 0,1 di bawah IP tahun lalu.";
+    const diff = j.min === null ? "" : `<p>Selisih dari tahun lalu: <strong>${fmtSigned(ip - j.min)}</strong></p>`;
+    verdict = `<div class="verdict ${key}"><div class="verdict-label">${st.label}</div><img src="${st.img}" alt="${st.label}" onerror="this.style.display='none'"><p>${note}</p>${diff}</div><p class="hint">Data tahun lalu hanya patokan. Batas tahun ini bisa berbeda.</p>`;
+  }
+
+  out.innerHTML = `<div class="result"><h2>Perhitungan IP penjurusan · ${j.name}</h2><p class="muted">Tiap mata kuliah dikali poinnya, lalu dibagi total poin.</p>${tbl}<p class="formula">${formula}</p><div class="sub"><h3>IP penjurusan tahun lalu yang diterima</h3>${last}</div><div class="sub"><h3>Status kamu</h3>${verdict}</div></div>`;
+}
+function calculate(){ calcSemester(); renderJurusan(); }
+
+/* ===== Events ===== */
+$("facGrid").addEventListener("click", e => {
+  const b = e.target.closest("[data-fac]"); if(!b) return;
+  const first = !facKey;
+  facKey = b.dataset.fac;
+  renderFaculties();
+  if(modeKey && !modesFor(curFac()).some(m => m.key === modeKey)) modeKey = "ip";
+  renderModes();
+  $("panelMode").hidden = false;
+  if(modeKey) renderCourses();
+  if(first) $("panelMode").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"nearest"});
+});
+$("modeList").addEventListener("click", e => {
+  const b = e.target.closest("[data-mode]"); if(!b) return;
+  modeKey = b.dataset.mode;
+  renderModes();
+  const wasHidden = $("panelCalc").hidden;
+  $("panelCalc").hidden = false;
+  renderCourses();
+  if(wasHidden) $("panelCalc").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"});
+});
+$("courseGrid").addEventListener("click", e => {
+  const b = e.target.closest("[data-grade]"); if(!b) return;
+  const k = gKey(facKey, b.dataset.course);
+  if(grades[k] === b.dataset.grade) delete grades[k]; else grades[k] = b.dataset.grade;
+  save();
+  const row = b.parentElement;
+  row.querySelectorAll("[data-grade]").forEach(x => x.setAttribute("aria-pressed", String(grades[k] === x.dataset.grade)));
+  calculate();
+});
+$("resetBtn").addEventListener("click", () => {
+  curFac().courses.forEach(id => delete grades[gKey(facKey,id)]);
+  save(); renderCourses();
+});
+
+renderFaculties();
+</script>
