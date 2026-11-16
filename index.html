@@ -95,6 +95,8 @@ tfoot td{font-weight:700;border-bottom:0}
 .verdict-label{font-family:var(--font-head);font-size:1.5rem;font-weight:700;line-height:1.2}
 .verdict img{display:block;max-height:80px;max-width:100%;margin:10px 0;border-radius:8px}
 .verdict p{color:var(--text);font-size:.9rem;margin-top:6px}
+a{color:var(--accent);font-weight:600}
+.contact{text-align:center;font-size:.9rem;margin-top:22px;overflow-wrap:anywhere}
 .footer{font-size:.8rem;color:var(--muted);text-align:center;margin:26px 0}
 @media(max-width:480px){.panel{padding:15px}.big{font-size:2.2rem}.fac-btn{padding:11px 12px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -124,6 +126,7 @@ tfoot td{font-weight:700;border-bottom:0}
     <div class="actions"><button type="button" class="ghost" id="resetBtn">Reset indeks</button></div>
   </section>
 
+  <p class="contact">Ada kesalahan, ingin berkontribusi, ingin request? Kontak <a href="https://x.com/GanyuGoated" target="_blank" rel="noopener noreferrer">@GanyuGoated</a> di X.</p>
   <div class="footer">Perhitungan berjalan di browser kamu. Nilai tidak dikirim ke server.</div>
 </main>
 
@@ -165,7 +168,12 @@ const FACULTIES = [
     {name:"Sistem dan Teknologi Informasi", poin:[["mat",5],["fis",3],["kim",1],["bk",5],["ppk",4]], min:null}
   ]},
   {key:"STEI-R", full:"Sekolah Teknik Elektro dan Informatika, Rekayasa", courses:BASE, jurusan:[]},
-  {key:"FTMD", full:"Fakultas Teknik Mesin dan Dirgantara", courses:[...BASE,"ptmmd"], jurusan:[]},
+  {key:"FTMD", full:"Fakultas Teknik Mesin dan Dirgantara", courses:[...BASE,"ptmmd"], jurusan:[
+    /* min:"unknown" = data tahun lalu belum dimiliki */
+    {name:"Teknik Mesin", poin:[["fis",5],["mat",4],["bk",3],["kim",2]], min:2.8},
+    {name:"Teknik Dirgantara", poin:[["mat",5],["fis",4],["bk",3],["kim",2]], min:"unknown"},
+    {name:"Teknik Material", poin:[["kim",5],["bk",4],["mat",3],["fis",2]], min:"unknown"}
+  ]},
   {key:"FTSL", full:"Fakultas Teknik Sipil dan Lingkungan", courses:BASE, jurusan:[]},
   {key:"SAPPK", full:"Sekolah Arsitektur, Perencanaan, dan Pengembangan Kebijakan", courses:[...BASE.filter(c=>c!=="lfis"&&c!=="lkim"),"lperm"], jurusan:[]},
   {key:"FSRD", full:"Fakultas Seni Rupa dan Desain", courses:["gb","gk","rd2","rd3","bk","pan","ppk","ldsrd"], jurusan:[]},
@@ -239,6 +247,7 @@ function calcSemester(){
 }
 
 /* ===== Penjurusan (khusus STEI-K) ===== */
+const CONTACT_URL = "https://x.com/GanyuGoated";
 const BAND = 0.1; /* selisih ±0,1 dari IP tahun lalu = Siaga 1 */
 const STATUS = {
   aman:{label:"Aman", img:"aman.png"},
@@ -273,12 +282,17 @@ function renderJurusan(){
     ? `IP penjurusan = ${fmtSks(sum)} ÷ ${fmtSks(totalP)} = <strong>${fmt(ip)}</strong>`
     : `<span class="muted">Isi indeks ${missing.map(r => r.name).join(", ")} untuk menghitung IP penjurusan.</span>`;
 
-  const last = j.min === null
+  const unknown = j.min === "unknown";
+  const last = unknown
+    ? `<div class="mid">DATA TIDAK DIMILIKI</div><p class="hint">Kami tidak memiliki data terkait IP Penjurusan terendah yang diterima tahun lalu. Jika kamu punya, hubungi <a href="${CONTACT_URL}" target="_blank" rel="noopener noreferrer">@GanyuGoated di X</a>.</p>`
+    : j.min === null
     ? `<div class="mid">Tidak mencukupi kuota</div><p class="hint">Pendaftar tahun lalu tidak memenuhi kuota, jadi tidak ada batas minimum.</p>`
     : `<div class="mid">${fmt(j.min)}</div><p class="hint">IP penjurusan terendah yang diterima tahun lalu.</p>`;
 
   let verdict = `<p class="hint">Status muncul setelah semua indeks yang dibutuhkan terisi.</p>`;
-  if(done){
+  if(unknown){
+    verdict = `<p class="hint">Status Aman, Siaga 1, atau Siaga 2 belum bisa ditentukan karena data tahun lalu belum ada.</p>`;
+  } else if(done){
     const key = statusOf(ip, j.min), st = STATUS[key];
     const note = key === "aman"
       ? (j.min === null ? "Kuota jurusan ini tidak terpenuhi tahun lalu, jadi semua pendaftar diterima." : "IP penjurusanmu lebih dari 0,1 di atas IP tahun lalu.")
@@ -329,3 +343,5 @@ $("resetBtn").addEventListener("click", () => {
 
 renderFaculties();
 </script>
+
+  
