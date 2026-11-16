@@ -167,7 +167,12 @@ const FACULTIES = [
     {name:"Teknik Informatika", poin:[["mat",5],["fis",3],["kim",1],["bk",5],["lik",4]], min:3.17},
     {name:"Sistem dan Teknologi Informasi", poin:[["mat",5],["fis",3],["kim",1],["bk",5],["ppk",4]], min:null}
   ]},
-  {key:"STEI-R", full:"Sekolah Teknik Elektro dan Informatika, Rekayasa", courses:BASE, jurusan:[]},
+  {key:"STEI-R", full:"Sekolah Teknik Elektro dan Informatika, Rekayasa", courses:BASE, jurusan:[
+    {name:"Teknik Elektro", poin:[["mat",4],["fis",4],["kim",1],["bk",3],["lfis",2]], min:"unknown"},
+    {name:"Teknik Tenaga Listrik", poin:[["mat",4],["fis",3],["kim",2],["bk",2],["lfis",1],["lkim",1]], min:"unknown"},
+    {name:"Teknik Telekomunikasi", poin:[["mat",5],["fis",4],["kim",1],["bk",3],["lfis",2]], min:"unknown"},
+    {name:"Teknik Biomedis", poin:[["mat",4],["fis",3],["kim",3],["bk",2],["lfis",1],["lkim",1]], min:"unknown"}
+  ]},
   {key:"FTMD", full:"Fakultas Teknik Mesin dan Dirgantara", courses:[...BASE,"ptmmd"], jurusan:[
     /* min:"unknown" = data tahun lalu belum dimiliki */
     {name:"Teknik Mesin", poin:[["fis",5],["mat",4],["bk",3],["kim",2]], min:2.8},
